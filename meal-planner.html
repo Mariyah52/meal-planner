@@ -1,0 +1,559 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-Powered 7-Day Meal Planner</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+<!-- Header -->
+<header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-md">
+<div class="max-w-6xl mx-auto px-4 py-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+<div class="flex items-center gap-3">
+<div class="bg-white text-blue-600 p-2.5 rounded-xl shadow-inner text-xl">
+<i class="fa-solid fa-utensils"></i>
+</div>
+<div>
+<h1 class="text-2xl font-bold tracking-tight">SmartPlan <span class="text-blue-200 font-light">Meals</span></h1>
+<p class="text-xs text-blue-100">Instantly generate your week and shopping list</p>
+</div>
+</div>
+<div class="text-sm bg-blue-500/30 px-3 py-1.5 rounded-full border border-blue-400/20 backdrop-blur-sm">
+<i class="fa-solid fa-bolt text-amber-300 mr-1.5"></i> AI-Powered System
+</div>
+</div>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 py-8">
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+
+<!-- Sidebar Controls -->
+<div class="lg:col-span-1 space-y-6">
+<div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+<h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+<i class="fa-solid fa-sliders text-blue-600"></i> Preferences
+</h2>
+
+<div class="space-y-3">
+<label class="block text-sm font-semibold text-slate-600">Dietary Profile</label>
+<select id="dietSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all">
+<option value="anything">Anything (No Restrictions)</option>
+<option value="vegetarian">Vegetarian</option>
+<option value="vegan">Vegan</option>
+<option value="gluten-free">Gluten-Free</option>
+<option value="keto">Keto (Low Carb)</option>
+</select>
+</div>
+
+<button id="generateBtn" class="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-blue-600/20 transition-all transform active:scale-[0.98] flex items-center justify-center gap-2">
+<i class="fa-solid fa-wand-magic-sparkles"></i> Generate Plan
+</button>
+</div>
+
+<!-- Live Shopping List Card -->
+<div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+<div class="flex justify-between items-center mb-4">
+<h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+<i class="fa-solid fa-basket-shopping text-blue-600"></i> Grocery List
+</h2>
+<span id="cartCount" class="bg-blue-50 text-blue-600 text-xs font-bold px-2 py-1 rounded-full">0 items</span>
+</div>
+<div class="max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
+<ul id="shoppingList" class="space-y-2 text-sm text-slate-600">
+<li class="text-slate-400 italic text-center py-4">Generate a plan to build your list.</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- Main Content Area -->
+<div class="lg:col-span-3">
+<div class="flex justify-between items-center mb-6">
+<h2 class="text-xl font-bold text-slate-900" id="planTitle">Your 7-Day Menu</h2>
+<span class="text-xs font-medium text-slate-400 bg-slate-100 px-3 py-1 rounded-full uppercase tracking-wider" id="dietBadge">Standard</span>
+</div>
+
+<div id="mealPlanGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Cards injection point -->
+</div>
+</div>
+
+</div>
+</main>
+
+<script>
+const mealDatabase = {
+"anything": {
+breakfast: [
+{ name: "Blueberry Oatmeal & Almonds", ingredients: ["Rolled oats", "Blueberries", "Almonds", "Honey"] },
+{ name: "Classic Avocado Toast with Egg", ingredients: ["Ezekiel bread", "Avocado", "Eggs", "Red pepper flakes"] },
+{ name: "Greek Yogurt Parfait", ingredients: ["Greek yogurt", "Granola", "Strawberries", "Chia seeds"] }
+],
+lunch: [
+{ name: "Grilled Chicken Salad", ingredients: ["Chicken breast", "Mixed greens", "Cherry tomatoes", "Cucumber", "Balsamic vinaigrette"] },
+{ name: "Turkey Avocado Wrap", ingredients: ["Whole wheat wrap", "Sliced turkey", "Avocado", "Spinach", "Mayo"] },
+{ name: "Quinoa Bowl with Roasted Veggies", ingredients: ["Quinoa", "Bell peppers", "Zucchini", "Chickpeas", "Olive oil"] }
+],
+dinner: [
+{ name: "Pan-Seared Salmon & Asparagus", ingredients: ["Salmon fillets", "Asparagus", "Lemon", "Garlic butter"] },
+{ name: "Beef & Broccoli Stir-Fry", ingredients: ["Flank steak", "Broccoli", "Soy sauce", "Ginger", "Brown rice"] },
+{ name: "Garlic Herb Shrimp Pasta", ingredients: ["Shrimp", "Linguine", "Garlic", "Parsley", "Parmesan cheese"] }
+]
+},
+"vegetarian": {
+breakfast: [
+{ name: "Spinach & Feta Egg Scramble", ingredients: ["Eggs", "Spinach", "Feta cheese", "Whole wheat toast"] },
+{ name: "Banana Peanut Butter Smoothie", ingredients: ["Bananas", "Peanut butter", "Almond milk", "Flaxseed"] },
+{ name: "Classic Avocado Toast", ingredients: ["Ezekiel bread", "Avocado", "Cherry tomatoes", "Hemp seeds"] }
+],
+lunch: [
+{ name: "Mediterranean Chickpea Salad", ingredients: ["Chickpeas", "Cucumber", "Olives", "Feta cheese", "Lemon dressing"] },
+{ name: "Caprese Grilled Cheese", ingredients: ["Sourdough bread", "Mozzarella", "Tomatoes", "Pesto"] },
+{ name: "Lentil Vegetable Soup", ingredients: ["Brown lentils", "Carrots", "Celery", "Diced tomatoes", "Vegetable broth"] }
+],
+dinner: [
+{ name: "Sweet Potato Black Bean Tacos", ingredients: ["Sweet potatoes", "Black beans", "Corn tortillas", "Cilantro", "Lime"] },
+{ name: "Vegetarian Buddha Bowl", ingredients: ["Brown rice", "Tofu", "Broccoli", "Tahini", "Carrots"] },
+{ name: "Mushroom Risotto", ingredients: ["Arborio rice", "Cremini mushrooms", "Vegetable stock", "Parmesan", "White wine"] }
+]
+},
+"vegan": {
+breakfast: [
+{ name: "Chia Seed Coconut Parfait", ingredients: ["Chia seeds", "Coconut milk", "Mango cubes", "Maple syrup"] },
+{ name: "Tofu Scramble with Veggies", ingredients: ["Firm tofu", "Bell peppers", "Spinach", "Turmeric", "Nutritional yeast"] },
+{ name: "Almond Butter & Banana Toast", ingredients: ["Sourdough bread", "Almond butter", "Bananas", "Cinnamon"] }
+],
+lunch: [
+{ name: "Crunchy Thai Peanut Salad", ingredients: ["Shredded cabbage", "Edamame", "Carrots", "Peanut dressing"] },
+{ name: "Hummus & Veggie Wrap", ingredients: ["Spinach wrap", "Hummus", "Cucumber", "Shredded carrots", "Bell peppers"] },
+{ name: "Black Bean & Corn Quinoa Salad", ingredients: ["Quinoa", "Black beans", "Corn", "Cilantro", "Lime dressing"] }
+],
+dinner: [
+{ name: "Chickpea Coconut Curry", ingredients: ["Chickpeas", "Coconut milk", "Curry paste", "Spinach", "Jasmine rice"] },
+{ name: "Lentil Shepherd's Pie", ingredients: ["Brown lentils", "Peas", "Carrots", "Mashed sweet potatoes"] },
+{ name: "BBQ Jackfruit Pulled Sliders", ingredients: ["Canned jackfruit", "BBQ sauce", "Vegan buns", "Cole slaw mix"] }
+]
+},
+"gluten-free": {
+breakfast: [
+{ name: "GF Oatmeal with Berries", ingredients: ["Gluten-free oats", "Strawberries", "Walnuts", "Maple syrup"] },
+{ name: "Sweet Potato Breakfast Hash", ingredients: ["Sweet potatoes", "Eggs", "Bell peppers", "Onions"] },
+{ name: "Green Protein Smoothie", ingredients: ["Protein powder", "Spinach", "Frozen mango", "Coconut water"] }
+],
+lunch: [
+{ name: "Turkey Lettuce Wraps", ingredients: ["Butter lettuce leaves", "Ground turkey", "Water chestnuts", "Tamari (GF Soy)"] },
+{ name: "Quinoa Citrus Salad", ingredients: ["Quinoa", "Arugula", "Orange segments", "Avocado", "Olive oil"] },
+{ name: "Salmon Salad Celery Boats", ingredients: ["Canned salmon", "Mayo", "Celery stalks", "Dill"] }
+],
+dinner: [
+{ name: "Lemon Herb Baked Chicken", ingredients: ["Chicken thighs", "Baby potatoes", "Green beans", "Lemon", "Rosemary"] },
+{ name: "Beef Stuffed Bell Peppers", ingredients: ["Bell peppers", "Lean ground beef", "Rice", "Tomato sauce"] },
+{ name: "Gluten-Free Veggie Pizza", ingredients: ["GF Cauliflower crust", "Marinara", "Mozzarella", "Mushrooms", "Basil"] }
+]
+},
+"keto": {
+breakfast: [
+{ name: "Bacon, Egg & Avocado Plate", ingredients: ["Bacon", "Eggs", "Avocado", "Butter"] },
+{ name: "Keto Bulletproof Coffee Smoothie", ingredients: ["Cold brew coffee", "Heavy cream", "MCT oil", "Cream cheese", "Ice"] },
+{ name: "Smoked Salmon Cream Cheese Rolls", ingredients: ["Smoked salmon", "Cream cheese", "Cucumber spears", "Everything bagel seasoning"] }
+],
+lunch: [
+{ name: "Cobb Salad with Avocado Bacon", ingredients: ["Hard-boiled eggs", "Bacon", "Avocado", "Blue cheese", "Romaine lettuce"] },
+{ name: "Keto Tuna Salad Salad", ingredients: ["Tuna", "Full-fat mayo", "Celery", "Served over spinach"] },
+{ name: "Chicken Bacon Caesar Bowls", ingredients: ["Chicken breast", "Bacon bits", "Parmesan shards", "Keto Caesar dressing"] }
+],
+dinner: [
+{ name: "Garlic Butter Steak Bites", ingredients: ["Ribeye steak", "Zucchini noodles", "Garlic", "Butter"] },
+{ name: "Creamy Tuscan Garlic Chicken", ingredients: ["Chicken breasts", "Heavy cream", "Sun-dried tomatoes", "Spinach", "Garlic"] },
+{ name: "Baked Salmon with Cauliflower Mash", ingredients: ["Salmon fillets", "Cauliflower florets", "Cream cheese", "Butter"] }
+]
+}
+};
+
+const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+function generatePlan() {
+const diet = document.getElementById("dietSelect").value;
+const grid = document.getElementById("mealPlanGrid");
+const shoppingListUl = document.getElementById("shoppingList");
+const badge = document.getElementById("dietBadge");
+
+badge.innerText = diet.replace("-", " ");
+grid.innerHTML = "";
+let masterIngredients = new Set();
+const pool = mealDatabase[diet];
+
+days.forEach((day, index) => {
+const bMeal = pool.breakfast[index % pool.breakfast.length];
+const lMeal = pool.lunch[index % pool.lunch.length];
+const dMeal = pool.dinner[index % pool.dinner.length];
+
+bMeal.ingredients.forEach(i => masterIngredients.add(i));
+lMeal.ingredients.forEach(i => masterIngredients.add(i));
+dMeal.ingredients.forEach(i => masterIngredients.add(i));
+
+const card = document.createElement("div");
+card.className = "bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-100 transition-all overflow-hidden flex flex-col";
+card.innerHTML = `
+<div class="bg-gradient-to-r from-blue-50 to-indigo-50/50 px-5 py-3 border-b border-slate-100 flex justify-between items-center">
+<h3 class="font-bold text-blue-900">${day}</h3>
+<i class="fa-regular fa-calendar-check text-blue-400"></i>
+</div>
+<div class="p-5 space-y-4 flex-grow">
+<div class="flex items-start gap-3">
+<span class="w-7 h-7 bg-amber-50 text-amber-600 rounded-lg text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">B</span>
+<div>
+<h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Breakfast</h4>
+<p class="text-sm font-medium text-slate-800">${bMeal.name}</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="w-7 h-7 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">L</span>
+<div>
+<h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Lunch</h4>
+<p class="text-sm font-medium text-slate-800">${lMeal.name}</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="w-7 h-7 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">D</span>
+<div>
+<h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Dinner</h4>
+<p class="text-sm font-medium text-slate-800">${dMeal.name}</p>
+</div>
+</div>
+</div>
+`;
+grid.appendChild(card);
+});
+
+shoppingListUl.innerHTML = "";
+const sortedIngredients = Array.from(masterIngredients).sort();
+
+sortedIngredients.forEach((item, idx) => {
+const li = document.createElement("li");
+li.className = "flex items-center gap-3 py-2 px-1 border-b border-slate-50 last:border-0 hover:bg-slate-50/50 rounded-lg transition-colors";
+li.innerHTML = `
+<input type="checkbox" id="item-${idx}" class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer">
+<label for="item-${idx}" class="select-none cursor-pointer font-medium text-slate-700">${item}</label>
+`;
+shoppingListUl.appendChild(li);
+});
+
+document.getElementById("cartCount").innerText = `${sortedIngredients.length} items`;
+}
+
+document.getElementById("generateBtn").addEventListener("click", generatePlan);
+window.addEventListener("DOMContentLoaded", generatePlan);
+</script>
+
+<style>
+.custom-scrollbar::-webkit-scrollbar { width: 5px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+input:checked + label { text-decoration: line-through; color: #94a3b8; }
+</style>
+</body>
+</html>
+"""
+
+Render it right in your output cell
+display(HTML(html_code))
+'''
+ 
+ 
+Model 10:58 PM
+Thoughts 
+Expand to view model thoughts
+chevron_right 
+ 
+ 
+ 
+ 
+To create a standalone version of your meal planner, you simply need to extract the HTML string from the Python code and save it as a .html file.
+
+Below is the complete, single-file code. You can copy this into Notepad (Windows) or TextEdit (Mac), save it as meal_planner.html, and double-click it to run.
+
+codeHtml
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-Powered 7-Day Meal Planner</title>
+<!-- External libraries loaded via CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+/* Custom scrollbar for the grocery list */
+.custom-scrollbar::-webkit-scrollbar { width: 5px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+/* Strikethrough logic for checked items */
+input:checked + label {
+text-decoration: line-through;
+color: #94a3b8;
+}
+
+/* Transition for smoother hover effects */
+.meal-card {
+transition: all 0.2s ease-in-out;
+}
+</style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+
+<!-- Header -->
+<header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-md">
+<div class="max-w-6xl mx-auto px-4 py-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+<div class="flex items-center gap-3">
+<div class="bg-white text-blue-600 p-2.5 rounded-xl shadow-inner text-xl">
+<i class="fa-solid fa-utensils"></i>
+</div>
+<div>
+<h1 class="text-2xl font-bold tracking-tight">SmartPlan <span class="text-blue-200 font-light">Meals</span></h1>
+<p class="text-xs text-blue-100">Instantly generate your week and shopping list</p>
+</div>
+</div>
+<div class="text-sm bg-blue-500/30 px-3 py-1.5 rounded-full border border-blue-400/20 backdrop-blur-sm">
+<i class="fa-solid fa-bolt text-amber-300 mr-1.5"></i> AI-Powered System
+</div>
+</div>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 py-8">
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+
+<!-- Sidebar Controls -->
+<div class="lg:col-span-1 space-y-6">
+<div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+<h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+<i class="fa-solid fa-sliders text-blue-600"></i> Preferences
+</h2>
+
+<div class="space-y-3">
+<label class="block text-sm font-semibold text-slate-600">Dietary Profile</label>
+<select id="dietSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all">
+<option value="anything">Anything (No Restrictions)</option>
+<option value="vegetarian">Vegetarian</option>
+<option value="vegan">Vegan</option>
+<option value="gluten-free">Gluten-Free</option>
+<option value="keto">Keto (Low Carb)</option>
+</select>
+</div>
+
+<button id="generateBtn" class="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-blue-600/20 transition-all transform active:scale-[0.98] flex items-center justify-center gap-2">
+<i class="fa-solid fa-wand-magic-sparkles"></i> Generate Plan
+</button>
+</div>
+
+<!-- Live Shopping List Card -->
+<div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+<div class="flex justify-between items-center mb-4">
+<h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+<i class="fa-solid fa-basket-shopping text-blue-600"></i> Grocery List
+</h2>
+<span id="cartCount" class="bg-blue-50 text-blue-600 text-xs font-bold px-2 py-1 rounded-full">0 items</span>
+</div>
+<div class="max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
+<ul id="shoppingList" class="space-y-2 text-sm text-slate-600">
+<li class="text-slate-400 italic text-center py-4">Generate a plan to build your list.</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- Main Content Area -->
+<div class="lg:col-span-3">
+<div class="flex justify-between items-center mb-6">
+<h2 class="text-xl font-bold text-slate-900" id="planTitle">Your 7-Day Menu</h2>
+<span class="text-xs font-medium text-slate-400 bg-slate-100 px-3 py-1 rounded-full uppercase tracking-wider" id="dietBadge">Standard</span>
+</div>
+
+<div id="mealPlanGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Cards injection point -->
+</div>
+</div>
+
+</div>
+</main>
+
+<script>
+const mealDatabase = {
+"anything": {
+breakfast: [
+{ name: "Blueberry Oatmeal & Almonds", ingredients: ["Rolled oats", "Blueberries", "Almonds", "Honey"] },
+{ name: "Classic Avocado Toast with Egg", ingredients: ["Ezekiel bread", "Avocado", "Eggs", "Red pepper flakes"] },
+{ name: "Greek Yogurt Parfait", ingredients: ["Greek yogurt", "Granola", "Strawberries", "Chia seeds"] }
+],
+lunch: [
+{ name: "Grilled Chicken Salad", ingredients: ["Chicken breast", "Mixed greens", "Cherry tomatoes", "Cucumber", "Balsamic vinaigrette"] },
+{ name: "Turkey Avocado Wrap", ingredients: ["Whole wheat wrap", "Sliced turkey", "Avocado", "Spinach", "Mayo"] },
+{ name: "Quinoa Bowl with Roasted Veggies", ingredients: ["Quinoa", "Bell peppers", "Zucchini", "Chickpeas", "Olive oil"] }
+],
+dinner: [
+{ name: "Pan-Seared Salmon & Asparagus", ingredients: ["Salmon fillets", "Asparagus", "Lemon", "Garlic butter"] },
+{ name: "Beef & Broccoli Stir-Fry", ingredients: ["Flank steak", "Broccoli", "Soy sauce", "Ginger", "Brown rice"] },
+{ name: "Garlic Herb Shrimp Pasta", ingredients: ["Shrimp", "Linguine", "Garlic", "Parsley", "Parmesan cheese"] }
+]
+},
+"vegetarian": {
+breakfast: [
+{ name: "Spinach & Feta Egg Scramble", ingredients: ["Eggs", "Spinach", "Feta cheese", "Whole wheat toast"] },
+{ name: "Banana Peanut Butter Smoothie", ingredients: ["Bananas", "Peanut butter", "Almond milk", "Flaxseed"] },
+{ name: "Classic Avocado Toast", ingredients: ["Ezekiel bread", "Avocado", "Cherry tomatoes", "Hemp seeds"] }
+],
+lunch: [
+{ name: "Mediterranean Chickpea Salad", ingredients: ["Chickpeas", "Cucumber", "Olives", "Feta cheese", "Lemon dressing"] },
+{ name: "Caprese Grilled Cheese", ingredients: ["Sourdough bread", "Mozzarella", "Tomatoes", "Pesto"] },
+{ name: "Lentil Vegetable Soup", ingredients: ["Brown lentils", "Carrots", "Celery", "Diced tomatoes", "Vegetable broth"] }
+],
+dinner: [
+{ name: "Sweet Potato Black Bean Tacos", ingredients: ["Sweet potatoes", "Black beans", "Corn tortillas", "Cilantro", "Lime"] },
+{ name: "Vegetarian Buddha Bowl", ingredients: ["Brown rice", "Tofu", "Broccoli", "Tahini", "Carrots"] },
+{ name: "Mushroom Risotto", ingredients: ["Arborio rice", "Cremini mushrooms", "Vegetable stock", "Parmesan", "White wine"] }
+]
+},
+"vegan": {
+breakfast: [
+{ name: "Chia Seed Coconut Parfait", ingredients: ["Chia seeds", "Coconut milk", "Mango cubes", "Maple syrup"] },
+{ name: "Tofu Scramble with Veggies", ingredients: ["Firm tofu", "Bell peppers", "Spinach", "Turmeric", "Nutritional yeast"] },
+{ name: "Almond Butter & Banana Toast", ingredients: ["Sourdough bread", "Almond butter", "Bananas", "Cinnamon"] }
+],
+lunch: [
+{ name: "Crunchy Thai Peanut Salad", ingredients: ["Shredded cabbage", "Edamame", "Carrots", "Peanut dressing"] },
+{ name: "Hummus & Veggie Wrap", ingredients: ["Spinach wrap", "Hummus", "Cucumber", "Shredded carrots", "Bell peppers"] },
+{ name: "Black Bean & Corn Quinoa Salad", ingredients: ["Quinoa", "Black beans", "Corn", "Cilantro", "Lime dressing"] }
+],
+dinner: [
+{ name: "Chickpea Coconut Curry", ingredients: ["Chickpeas", "Coconut milk", "Curry paste", "Spinach", "Jasmine rice"] },
+{ name: "Lentil Shepherd's Pie", ingredients: ["Brown lentils", "Peas", "Carrots", "Mashed sweet potatoes"] },
+{ name: "BBQ Jackfruit Pulled Sliders", ingredients: ["Canned jackfruit", "BBQ sauce", "Vegan buns", "Cole slaw mix"] }
+]
+},
+"gluten-free": {
+breakfast: [
+{ name: "GF Oatmeal with Berries", ingredients: ["Gluten-free oats", "Strawberries", "Walnuts", "Maple syrup"] },
+{ name: "Sweet Potato Breakfast Hash", ingredients: ["Sweet potatoes", "Eggs", "Bell peppers", "Onions"] },
+{ name: "Green Protein Smoothie", ingredients: ["Protein powder", "Spinach", "Frozen mango", "Coconut water"] }
+],
+lunch: [
+{ name: "Turkey Lettuce Wraps", ingredients: ["Butter lettuce leaves", "Ground turkey", "Water chestnuts", "Tamari (GF Soy)"] },
+{ name: "Quinoa Citrus Salad", ingredients: ["Quinoa", "Arugula", "Orange segments", "Avocado", "Olive oil"] },
+{ name: "Salmon Salad Celery Boats", ingredients: ["Canned salmon", "Mayo", "Celery stalks", "Dill"] }
+],
+dinner: [
+{ name: "Lemon Herb Baked Chicken", ingredients: ["Chicken thighs", "Baby potatoes", "Green beans", "Lemon", "Rosemary"] },
+{ name: "Beef Stuffed Bell Peppers", ingredients: ["Bell peppers", "Lean ground beef", "Rice", "Tomato sauce"] },
+{ name: "Gluten-Free Veggie Pizza", ingredients: ["GF Cauliflower crust", "Marinara", "Mozzarella", "Mushrooms", "Basil"] }
+]
+},
+"keto": {
+breakfast: [
+{ name: "Bacon, Egg & Avocado Plate", ingredients: ["Bacon", "Eggs", "Avocado", "Butter"] },
+{ name: "Keto Bulletproof Coffee Smoothie", ingredients: ["Cold brew coffee", "Heavy cream", "MCT oil", "Cream cheese", "Ice"] },
+{ name: "Smoked Salmon Cream Cheese Rolls", ingredients: ["Smoked salmon", "Cream cheese", "Cucumber spears", "Everything bagel seasoning"] }
+],
+lunch: [
+{ name: "Cobb Salad with Avocado Bacon", ingredients: ["Hard-boiled eggs", "Bacon", "Avocado", "Blue cheese", "Romaine lettuce"] },
+{ name: "Keto Tuna Salad Salad", ingredients: ["Tuna", "Full-fat mayo", "Celery", "Served over spinach"] },
+{ name: "Chicken Bacon Caesar Bowls", ingredients: ["Chicken breast", "Bacon bits", "Parmesan shards", "Keto Caesar dressing"] }
+],
+dinner: [
+{ name: "Garlic Butter Steak Bites", ingredients: ["Ribeye steak", "Zucchini noodles", "Garlic", "Butter"] },
+{ name: "Creamy Tuscan Garlic Chicken", ingredients: ["Chicken breasts", "Heavy cream", "Sun-dried tomatoes", "Spinach", "Garlic"] },
+{ name: "Baked Salmon with Cauliflower Mash", ingredients: ["Salmon fillets", "Cauliflower florets", "Cream cheese", "Butter"] }
+]
+}
+};
+
+const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+function generatePlan() {
+const diet = document.getElementById("dietSelect").value;
+const grid = document.getElementById("mealPlanGrid");
+const shoppingListUl = document.getElementById("shoppingList");
+const badge = document.getElementById("dietBadge");
+
+// Update Header Info
+badge.innerText = diet.replace("-", " ");
+grid.innerHTML = "";
+
+let masterIngredients = new Set();
+const pool = mealDatabase[diet];
+
+// Build Day Cards
+days.forEach((day, index) => {
+const bMeal = pool.breakfast[index % pool.breakfast.length];
+const lMeal = pool.lunch[index % pool.lunch.length];
+const dMeal = pool.dinner[index % pool.dinner.length];
+
+// Add to grocery list
+bMeal.ingredients.forEach(i => masterIngredients.add(i));
+lMeal.ingredients.forEach(i => masterIngredients.add(i));
+dMeal.ingredients.forEach(i => masterIngredients.add(i));
+
+const card = document.createElement("div");
+card.className = "meal-card bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-100 overflow-hidden flex flex-col";
+card.innerHTML = `
+<div class="bg-gradient-to-r from-blue-50 to-indigo-50/50 px-5 py-3 border-b border-slate-100 flex justify-between items-center">
+<h3 class="font-bold text-blue-900">${day}</h3>
+<i class="fa-regular fa-calendar-check text-blue-400"></i>
+</div>
+<div class="p-5 space-y-4 flex-grow">
+<div class="flex items-start gap-3">
+<span class="w-7 h-7 bg-amber-50 text-amber-600 rounded-lg text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">B</span>
+<div>
+<h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Breakfast</h4>
+<p class="text-sm font-medium text-slate-800">${bMeal.name}</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="w-7 h-7 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">L</span>
+<div>
+<h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Lunch</h4>
+<p class="text-sm font-medium text-slate-800">${lMeal.name}</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="w-7 h-7 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">D</span>
+<div>
+<h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Dinner</h4>
+<p class="text-sm font-medium text-slate-800">${dMeal.name}</p>
+</div>
+</div>
+</div>
+`;
+grid.appendChild(card);
+});
+
+// Update Shopping List
+shoppingListUl.innerHTML = "";
+const sortedIngredients = Array.from(masterIngredients).sort();
+
+sortedIngredients.forEach((item, idx) => {
+const li = document.createElement("li");
+li.className = "flex items-center gap-3 py-2 px-1 border-b border-slate-50 last:border-0 hover:bg-slate-50/50 rounded-lg transition-colors";
+li.innerHTML = `
+<input type="checkbox" id="item-${idx}" class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer">
+<label for="item-${idx}" class="select-none cursor-pointer font-medium text-slate-700">${item}</label>
+`;
+shoppingListUl.appendChild(li);
+});
+
+document.getElementById("cartCount").innerText = `${sortedIngredients.length} items`;
+}
+
+// Attach Event Listeners
+document.getElementById("generateBtn").addEventListener("click", generatePlan);
+
+// Initial Run
+window.addEventListener("DOMContentLoaded", generatePlan);
+</script>
+</body>
+</html>
